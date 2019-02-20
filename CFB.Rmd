@@ -1,0 +1,589 @@
+---
+title: "CFB"
+author: "Sydney"
+date: "2/19/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+X_CFBRversion130 <- read_excel("X_CFBRversion130.xlsx")
+
+X_CFBRversion <- X_CFBRversion130
+```
+
+```{r, results=FALSE}
+#Forward Regression
+library(MASS)
+X_CFBRversion<-na.omit(X_CFBRversion)
+fullfit<-lm(Zsagarin~FrNbrRecruits+Fr5star+Fr4star+Fr3star+Fravg+Sonbrrecruits+So5star+So4star+So3star+Soavg+Jrnbrrecruits+Jr5star+Jr4star+Jr3star+Jravg+Srnbrrecruits+Sr5star+Sr4star+Sr3star+Sravg+Rssrnbrrecruits+Rssr5star+Rssr4star+Rssr3star+ Rssravg+z_lysagarin+z_tyasagarin+retoff+retdef+qbret+bowl+bowlwin+coachexp_school+coachexp_total+BigTen+SEC+BigTwelve+ACC+PacTen+Bigeast, data = X_CFBRversion)
+
+nopredictors<-lm(Zsagarin~1, data=X_CFBRversion)
+
+fw<-stepAIC(nopredictors,scope=list(upper=fullfit), direction= c("forward"))
+
+nopredictors
+
+
+```
+
+```{r, results=FALSE}
+#Backward Regression
+bw<-step(lm(Zsagarin~FrNbrRecruits+Fr5star+Fr4star+Fr3star+Fravg+Sonbrrecruits+So5star+So4star+So3star
+        +Soavg+Jrnbrrecruits+Jr5star+Jr4star+Jr3star+Jravg+Srnbrrecruits+Sr5star+Sr4star+Sr3star+Sravg+Rssrnbrrecruits+Rssr5star+Rssr4star+Rssr3star+Rssravg+z_lysagarin+z_tyasagarin+retoff+retdef+qbret+bowl+bowlwin+coachexp_school+coachexp_total+BigTen+SEC+BigTwelve+ACC+PacTen+Bigeast, data = X_CFBRversion), direction = c("backward"))
+
+```
+
+
+```{r, results=FALSE}
+#Stepwise Regression
+sw<-step(lm(Zsagarin~FrNbrRecruits+Fr5star+Fr4star+Fr3star+Fravg+Sonbrrecruits+So5star+So4star+So3star+Soavg+Jrnbrrecruits+Jr5star+Jr4star+Jr3star+Jravg+Srnbrrecruits+Sr5star+Sr4star+Sr3star+Sravg+Rssrnbrrecruits+Rssr5star+Rssr4star+Rssr3star+Rssravg+z_lysagarin+z_tyasagarin+retoff+retdef+qbret+bowl+bowlwin+coachexp_school+coachexp_total+BigTen+SEC+BigTwelve+ACC+PacTen+Bigeast, data = X_CFBRversion), direction = c("both"))
+
+```
+
+```{r}
+##Each Model's variables/significance
+summary(fw)
+summary(bw)
+summary(sw)
+```
+
+
+```{r, results=FALSE}
+#Fit model to data without 2015 season
+
+##These are the columns of the significant variables in the forward model
+fwsubset <- as.data.frame(X_CFBRversion[,c(1,4,6,9,17,18,19,20,21,37,40,41,42,45)])
+
+fwsubset
+
+colnames(fwsubset) <- c("Team","Zsagarin", "Fr5star", "Fravg", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+
+
+# fit model using observations all but 2015 season
+fwx15 <- lm(Zsagarin ~ z_lysagarin + Fravg + 
+retoff + Jr4star + retdef + 
+coachexp_school + Jrnbrrecruits + 
+Fr5star + Jravg + Jr5star + 
+Jr3star + qbret, data = fwsubset[c(1:549,627:780),])
+
+
+#predict 2015
+fwpredict<-predict(fwx15, newdata = fwsubset[550:626,])
+
+
+```
+
+
+
+```{r}
+#Fit backward model to data withough 2015 season
+
+##THese are all the columns of the variables that were significant in the backward model 
+bwsubset <- as.data.frame(X_CFBRversion[,c(1,4, 6, 7, 17, 18, 19, 20, 21, 37, 40 , 41, 42, 45)])
+
+colnames(bwsubset) <- c("Team","Zsagarin", "Fr5star", "Fr4star", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+
+# fit model using observations all but 2015 season
+bwx15 <- lm(Zsagarin ~ Fr5star + Fr4star + 
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school, data = bwsubset[c(1:549,627:780),])
+
+#predict 2015
+bwpredict<-predict(bwx15, newdata = bwsubset[550:626,])
+
+```
+
+```{r}
+#Fit stepwise model to data withough 2015 season
+
+##THese are all the columns of the variables that were significant in the stepwise model
+swsubset <- as.data.frame(X_CFBRversion[,c(1,4, 6, 7, 17, 18, 19, 20, 21, 33, 37, 40 , 41, 42, 45)])
+
+colnames(swsubset) <- c("Team","Zsagarin", "Fr5star", "Fr4star", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "Rssravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+
+swx15 <- lm(Zsagarin ~ Fr5star + Fr4star + 
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + Rssravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school, data = swsubset[c(1:549,627:780),])
+
+#predict 2015
+swpredict<-predict(swx15, newdata = swsubset[550:626,])
+```
+
+```{r, include=FALSE}
+##IMPORTANT
+
+predict<-as.vector(fwpredict)
+
+
+predict
+
+X_CFBRversion2015<-X_CFBRversion[550:626,]
+
+X_CFBRversion2015$prediction<-predict
+X_CFBRversion2015$prediction
+```
+
+```{r}
+#TOPTEN FUNCTION
+#Not sure if this is relevant now
+topten<- function(x) {
+  y<-x[rev(order(x$prediction)),]
+  return(c(y$Team[1:10], y$prediction[1:10]))
+}
+```
+
+
+```{r}
+fwsubset <- as.data.frame(X_CFBRversion[,c(1,4,6,9,17,18,19,20,21,37,40,41,42,45)])
+
+
+colnames(fwsubset) <- c("Team","Zsagarin", "Fr5star", "Fravg", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+
+
+# fit model using observations all but 2015 season
+fwx18 <- lm(Zsagarin ~ z_lysagarin + Fravg + 
+retoff + Jr4star + retdef + 
+coachexp_school + Jrnbrrecruits + 
+Fr5star + Jravg + Jr5star + 
+Jr3star + qbret, data = fwsubset[c(1:780),])
+
+
+#predict 2018
+fwpredict<-predict(fwx18, newdata = fwsubset[781:857,])
+
+predict<-as.vector(fwpredict)
+
+
+predict
+
+X_CFBRversion2018<-X_CFBRversion[781:857,]
+
+X_CFBRversion2018$prediction<-predict
+X_CFBRversion2018$prediction
+```
+
+```{r}
+topten(X_CFBRversion2018)
+```
+
+
+
+
+```{r}
+predictionsvsactual<-data.frame(matrix(NA,nrow=77,ncol=6))
+predictionsvsactual[,1]<-X_CFBRversion$Team[550:626]
+predictionsvsactual[,3]<-fwpredict
+predictionsvsactual[,4]<-bwpredict
+predictionsvsactual[,5]<-swpredict
+predictionsvsactual[,2]<-X_CFBRversion$Zsagarin[550:626]
+predictionsvsactual[,6]<-X_CFBRversion$conference[550:626]
+colnames(predictionsvsactual)<-c("team","zsag","fw","bw","sw","conference")
+```
+
+
+
+
+```{r}
+swsubset <- as.data.frame(X_CFBRversion[,c(4, 6, 7, 17, 18, 19, 20, 21, 33, 37, 40 , 41, 42, 45)])
+
+colnames(swsubset) <- c("Zsagarin", "Fr5star", "Fr4star", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "Rssravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+
+swx16 <- lm(Zsagarin ~ Fr5star + Fr4star + 
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + Rssravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school, data = swsubset[c(1:626,704:780),])
+
+#predict 2016
+swpredict<-predict(swx16, newdata = swsubset[627:703,])
+
+
+predictionsvsactual16<-data.frame(matrix(nrow=77,ncol=4))
+predictionsvsactual16[,1]<-X_CFBRversion$Team[627:703]
+predictionsvsactual16[,2]<-X_CFBRversion$Zsagarin[627:703]
+predictionsvsactual16[,3]<-swpredict
+predictionsvsactual16[,4]<-X_CFBRversion$conference[627:703]
+colnames(predictionsvsactual16)<-c("team","zsag","sw","conference")
+```
+
+
+
+```{r}
+library(ggplot2)
+ggplot(predictionsvsactual16,aes(x=sw,y=zsag,color=conference))+
+  geom_point()+
+  xlab("Predicted ZSagarin Score")+
+  ylab("Actual ZSagarin Score")+
+  ggtitle("Predictions Vs. Actual for 2016 Season")
+```
+
+
+
+```{r}
+#Template for predicting sagarin
+
+swsubset <- as.data.frame(X_CFBRversion[,c(4, 6, 7, 17, 18, 19, 20, 21, 33, 37, 40 , 41, 42, 45)])
+
+colnames(swsubset) <- c("Zsagarin", "Fr5star", "Fr4star", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "Rssravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+
+swx17 <- lm(Zsagarin ~ Fr5star + Fr4star + 
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + Rssravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school, data = swsubset[c(1:703),])
+
+#predict 2017
+swpredict<-predict(swx17, newdata = swsubset[704:780,])
+
+
+predictionsvsactual17<-data.frame(matrix(nrow=77,ncol=4))
+predictionsvsactual17[,1]<-X_CFBRversion$Team[704:780]
+predictionsvsactual17[,2]<-X_CFBRversion$Zsagarin[704:780]
+predictionsvsactual17[,3]<-swpredict
+predictionsvsactual17[,4]<-X_CFBRversion$conference[704:780]
+colnames(predictionsvsactual17)<-c("team","zsag","sw","conference")
+```
+
+```{r}
+library(ggplot2)
+ggplot(predictionsvsactual17,aes(x=sw,y=zsag,color=conference))+
+  geom_point()+
+  xlab("Predicted ZSagarin Score")+
+  ylab("Actual ZSagarin Score")+
+  ggtitle("Predictions Vs. Actual for 2017 Season")
+```
+
+
+
+```{r}
+#CREATE  OVER 10 VARIABLE
+X_CFBRversion$over10<-ifelse(X_CFBRversion$coachexp_school > 10,1,0) 
+X_CFBRversion$expmin10<-X_CFBRversion$coachexp_school-10
+```
+
+
+
+```{r}
+#Non-Linearity (quadratic) of Fr4Star and Coach Exp 
+
+stepQuad<-lm(Zsagarin ~ Fr5star + Fr4star + So5star +
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + Rssravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school + I(coachexp_school^2) + I(Fr4star^2), data = X_CFBRversion)
+summary(stepQuad)
+```
+
+
+```{r}
+plot(predict(stepQuad),residuals(stepQuad))
+
+hist(residuals(stepQuad))
+
+qqnorm(residuals(stepQuad))
+```
+
+
+```{r}
+#Non-Linearity of coach experience  
+X_CFBRversion$Int<-X_CFBRversion$expmin10*X_CFBRversion$over10
+
+step<-lm(Zsagarin ~ Fr5star + Fr4star + 
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + Rssravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school, data = X_CFBRversion)
+
+stepImproved<-lm(Zsagarin ~ Fr5star + Fr4star + 
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + Rssravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school + Int, data = X_CFBRversion)
+
+summary(stepImproved)
+summary(step)
+
+extractAIC(stepImproved, scale = 0)
+extractAIC(step, scale = 0)
+
+
+```
+
+```{r}
+#install.packages("party")
+library(party)
+#install.packages("tree")
+library(tree)
+```
+
+
+```{r}
+#Predict Sagaring using "old" models
+swsubset <- as.data.frame(X_CFBRversion[,c(1,2,4,6,7,17,18,19,20,21,33,37,40,41,42,45)])
+fwsubset <- as.data.frame(X_CFBRversion[,c(1,2,4,6,9,17,18,19,20,21,37,40,41,42,45)])
+bwsubset <- as.data.frame(X_CFBRversion[,c(1,2,4,6,7,17,18,19,20,21,37,40,41,42,45)])
+
+predSag<- function(x,y)
+{
+  dat<-subset(swsubset, swsubset$Year != y)
+  newdat<-subset(swsubset, swsubset$Year == y)
+  if(x=="stepwise") {
+    colnames(dat) <- c("Team","Year", "Zsagarin", "Fr5star", "Fr4star", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "Rssravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+    sw<- lm(Zsagarin ~ Fr5star + Fr4star + Jrnbrrecruits + Jr5star + Jr4star + 
+              Jr3star + Jravg + Rssravg + z_lysagarin + retoff + retdef + qbret + 
+              coachexp_school, data = dat)
+    preds<-predict(sw, newdata = newdat)
+    predset<-t(rbind(newdat$Team,newdat$Zsagarin,preds))
+     preddf<-as.data.frame(predset)
+  }
+  if(x=="forward") {
+    dat<-subset(fwsubset, fwsubset$Year != y)
+    newdat<-subset(fwsubset, fwsubset$Year == y)
+    colnames(dat) <- c("Team","Year","Zsagarin", "Fr5star", "Fravg", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+  
+    fw<- lm(Zsagarin ~ z_lysagarin + Fravg + retoff + Jr4star + retdef + 
+              coachexp_school + Jrnbrrecruits + Fr5star + Jravg + Jr5star + 
+              Jr3star + qbret, data = dat)
+    
+  preds<-predict(fw, newdata = newdat)
+  predset<-t(rbind(newdat$Team, newdat$Zsagarin,preds))
+   preddf<-as.data.frame(predset)
+  }
+  if(x=="backward"){
+    dat<-subset(bwsubset, bwsubset$Year != y)
+    newdat<-subset(bwsubset, bwsubset$Year == y)
+  colnames(dat) <- c("Team","Year","Zsagarin", "Fr5star", "Fr4star", "Jrnbrrecruits", "Jr5star", "Jr4star", "Jr3star", "Jravg", "z_lysagarin", "retoff", "retdef", "qbret", "coachexp_school")
+  bw <- lm(Zsagarin ~ Fr5star + Fr4star + 
+            Jrnbrrecruits + Jr5star + Jr4star + 
+            Jr3star + Jravg + z_lysagarin + 
+            retoff + retdef + qbret + 
+            coachexp_school, data = dat)
+  preds<-predict(bw, newdata = newdat)
+  predset<-t(rbind(newdat$Team,newdat$Zsagarin,preds))
+  preddf<-as.data.frame(predset)
+
+  }
+  preddf$V2<-as.numeric(as.character(preddf$V2))
+  preddf$preds<-as.numeric(as.character(preddf$preds))
+ return(preddf)
+}
+predSag("forward",2011)
+
+```
+
+
+```{r}
+fw07<-predSag("forward",2007)
+bw07<-predSag("backward", 2007)
+sw07<-predSag("stepwise",2007)
+fw08<-predSag("forward",2008)
+bw08<-predSag("backward", 2008)
+sw08<-predSag("stepwise",2008)
+fw09<-predSag("forward",2009)
+bw09<-predSag("backward", 2009)
+sw09<-predSag("stepwise",2009)
+fw10<-predSag("forward",2010)
+bw10<-predSag("backward", 2010)
+sw10<-predSag("stepwise",2010)
+fw11<-predSag("forward",2011)
+bw11<-predSag("backward", 2011)
+sw11<-predSag("stepwise",2011)
+fw12<-predSag("forward",2012)
+bw12<-predSag("backward", 2012)
+sw12<-predSag("stepwise",2012)
+fw13<-predSag("forward",2013)
+bw13<-predSag("backward", 2013)
+sw13<-predSag("stepwise",2013)
+fw14<-predSag("forward",2014)
+bw14<-predSag("backward", 2014)
+sw14<-predSag("stepwise",2014)
+fw15<-predSag("forward",2015)
+bw15<-predSag("backward", 2015)
+sw15<-predSag("stepwise",2015)
+fw16<-predSag("forward",2016)
+bw16<-predSag("backward", 2016)
+sw16<-predSag("stepwise",2016)
+fw17<-predSag("forward",2017)
+bw17<-predSag("backward", 2017)
+sw17<-predSag("stepwise",2017)
+fw18<-predSag("forward",2018)
+bw18<-predSag("backward", 2018)
+sw18<-predSag("stepwise",2018)
+
+```
+
+```{r}
+#Template for pred tree sag function
+set.seed(4)
+select_rows <- sample(1:nrow(X_CFBRversion),round(0.3*nrow(X_CFBRversion)),replace=F)
+select_rows
+test <- X_CFBRversion[select_rows,]
+train <- X_CFBRversion[-(select_rows),]
+
+model_tree <-tree(Zsagarin~FrNbrRecruits+Fr5star+Fr4star+Fr3star+Fravg+Sonbrrecruits+So5star+So4star+So3star+Soavg+Jrnbrrecruits+Jr5star+Jr4star+Jr3star+Jravg+Srnbrrecruits+Sr5star+Sr4star+Sr3star+Sravg+Rssrnbrrecruits+Rssr5star+Rssr4star+Rssr3star+ Rssravg+z_lysagarin+z_tyasagarin+retoff+retdef+qbret+bowl+bowlwin+coachexp_school+coachexp_total+BigTen+SEC+BigTwelve+ACC+PacTen+Bigeast, data = X_CFBRversion)
+plot(model_tree)
+text(model_tree,cex=.5)
+pred <- predict(model_tree,newdata = test)
+predvsact<- t(rbind(pred,test$Zsagarin))
+as.data.frame(predvsact)
+
+```
+
+
+
+```{r}
+treePredSag<- function(x) {
+
+  train<-  subset(X_CFBRversion, X_CFBRversion$Year != x)
+  test<- subset(X_CFBRversion, X_CFBRversion$Year == x)
+model_tree <-tree(Zsagarin~FrNbrRecruits+Fr5star+Fr4star+Fr3star+Fravg+Sonbrrecruits+So5star+So4star+So3star+Soavg+Jrnbrrecruits+Jr5star+Jr4star+Jr3star+Jravg+Srnbrrecruits+Sr5star+Sr4star+Sr3star+Sravg+Rssrnbrrecruits+Rssr5star+Rssr4star+Rssr3star+ Rssravg+z_lysagarin+z_tyasagarin+retoff+retdef+qbret+bowl+bowlwin+coachexp_school+coachexp_total+BigTen+SEC+BigTwelve+ACC+PacTen+Bigeast, data = train)
+plot(model_tree)
+text(model_tree,cex=.5)
+pred <- predict(model_tree,newdata = test)
+predvsact<- t(rbind(pred,test$Zsagarin, test$Team))
+predvsact<-as.data.frame(predvsact)
+#predvsact$V2<-as.numeric(as.character(predvsact$V2))
+#predvsact$pred<-as.numeric(as.character(predvsact$pred))
+return(predvsact)  
+}
+```
+
+```{r}
+tree07<-treePredSag(2007)
+tree07$pred<-as.numeric(as.character(tree07$pred))
+tree07$V2<-as.numeric(as.character(tree07$V2))
+tree08<-treePredSag(2008)
+tree08$pred<-as.numeric(as.character(tree08$pred))
+tree08$V2<-as.numeric(as.character(tree08$V2))
+tree09<-treePredSag(2009)
+tree09$pred<-as.numeric(as.character(tree09$pred))
+tree09$V2<-as.numeric(as.character(tree09$V2))
+tree10<-treePredSag(2010)
+tree10$pred<-as.numeric(as.character(tree10$pred))
+tree10$V2<-as.numeric(as.character(tree10$V2))
+tree11<-treePredSag(2011)
+tree11$pred<-as.numeric(as.character(tree11$pred))
+tree11$V2<-as.numeric(as.character(tree11$V2))
+tree12<-treePredSag(2012)
+tree12$pred<-as.numeric(as.character(tree12$pred))
+tree12$V2<-as.numeric(as.character(tree12$V2))
+tree13<-treePredSag(2013)
+tree13$pred<-as.numeric(as.character(tree13$pred))
+tree13$V2<-as.numeric(as.character(tree13$V2))
+tree14<-treePredSag(2014)
+tree14$pred<-as.numeric(as.character(tree14$pred))
+tree14$V2<-as.numeric(as.character(tree14$V2))
+tree15<-treePredSag(2015)
+tree15$pred<-as.numeric(as.character(tree15$pred))
+tree15$V2<-as.numeric(as.character(tree15$V2))
+tree16<-treePredSag(2016)
+tree16$pred<-as.numeric(as.character(tree16$pred))
+tree16$V2<-as.numeric(as.character(tree16$V2))
+tree17<-treePredSag(2017)
+tree17$pred<-as.numeric(as.character(tree17$pred))
+tree17$V2<-as.numeric(as.character(tree17$V2))
+tree18<-treePredSag(2018) 
+tree18$pred<-as.numeric(as.character(tree18$pred))
+tree18$V2<-as.numeric(as.character(tree18$V2))
+```
+
+
+
+```{r}
+MSPETable<-data.frame(matrix(ncol=0,nrow=12))
+MSPETable$sw<-c(mean((sw07$preds - sw07$V2)^2), mean((sw08$preds - sw08$V2)^2), mean((sw09$preds - sw09$V2)^2),mean((sw10$preds - sw10$V2)^2), mean((sw11$preds - sw11$V2)^2), mean((sw12$preds - sw12$V2)^2), mean((sw13$preds - sw13$V2)^2), mean((sw14$preds - sw14$V2)^2), mean((sw15$preds - sw15$V2)^2), mean((sw16$preds - sw16$V2)^2), mean((sw17$preds - sw17$V2)^2), mean((sw18$preds - sw18$V2)^2))
+MSPETable$fw<-c(mean((fw07$preds - fw07$V2)^2), mean((fw08$preds - fw08$V2)^2), mean((fw09$preds - fw09$V2)^2),mean((fw10$preds - fw10$V2)^2), mean((fw11$preds - fw11$V2)^2), mean((fw12$preds - fw12$V2)^2), mean((fw13$preds - fw13$V2)^2), mean((fw14$preds - fw14$V2)^2), mean((fw15$preds - fw15$V2)^2), mean((fw16$preds - fw16$V2)^2), mean((fw17$preds - fw17$V2)^2), mean((fw18$preds-fw18$V2)^2))
+MSPETable$bw<-c(mean((bw07$preds - bw07$V2)^2), mean((bw08$preds - bw08$V2)^2), mean((bw09$preds - bw09$V2)^2),mean((bw10$preds - bw10$V2)^2), mean((bw11$preds - bw11$V2)^2), mean((bw12$preds - bw12$V2)^2), mean((bw13$preds - bw13$V2)^2), mean((bw14$preds - bw14$V2)^2), mean((bw15$preds - bw15$V2)^2), mean((bw16$preds - bw16$V2)^2), mean((bw17$preds - bw17$V2)^2), mean((bw18$preds - bw18$V2)^2))
+MSPETable$tree<-c(mean((tree07$pred - tree07$V2)^2), mean((tree08$pred - tree08$V2)^2), mean((tree09$pred - tree09$V2)^2),mean((tree10$pred - tree10$V2)^2), 
+mean((tree11$pred - tree11$V2)^2), mean((tree12$pred - tree12$V2)^2), mean((tree13$pred - tree13$V2)^2), mean((tree14$pred - tree14$V2)^2), mean((tree15$pred - tree15$V2)^2), mean((tree16$pred - tree16$V2)^2), mean((tree17$pred - tree17$V2)^2),mean((tree18$pred - tree18$V2)^2))
+MSPETable$year<-c(2007:2018)
+
+mean(MSPETable$sw)
+mean(MSPETable$bw)
+mean(MSPETable$fw)
+mean(MSPETable$tree)
+
+```
+
+
+```{r}
+ggplot(X_CFBRversion, aes(x=coachexp_school, y=Zsagarin))+
+  geom_point()
+```
+
+
+```{r}
+library(dplyr)
+head(X_CFBRversion)
+```
+
+```{r}
+##Template for predicting with "new" models
+
+
+swsubset <- X_CFBRversion %>%
+  dplyr::select(Team, Year, Zsagarin, Fr5star, Fr4star, Fr3star, So5star, Jrnbrrecruits, 
+    Jr5star, Jr4star, Jr3star, Jravg, z_lysagarin, retoff, 
+    retdef, qbret, coachexp_school, Rssravg)
+fwsubset <- X_CFBRversion %>%
+  dplyr::select(Team,Year,Zsagarin, z_lysagarin, Fravg, retoff, retdef, Jrnbrrecruits, 
+    Jravg, coachexp_school, qbret, Fr5star, Jr5star, So5star)
+bwsubset <- X_CFBRversion %>%
+  dplyr::select(Team, Year, Zsagarin, Fr5star, Fr4star, Fr3star, So5star, Jrnbrrecruits, 
+    Jr5star, Jr4star, Jr3star, Jravg, z_lysagarin, retoff, 
+    retdef, qbret, coachexp_school)
+
+predSagNew<- function(x,y)
+{
+  dat<-subset(swsubset, swsubset$Year != y)
+  newdat<-subset(swsubset, swsubset$Year == y)
+  if(x=="stepwise") {
+    colnames(dat) <- c('Team', 'Year', 'Zsagarin', 'Fr5star', 'Fr4star', 'Fr3star', 'So5star', 'Jrnbrrecruits', 'Jr5star', 'Jr4star', 'Jr3star', 'Jravg', 'z_lysagarin', 'retoff', 
+    'retdef', 'qbret', 'coachexp_school', 'Rssravg')
+    sw<- lm(Zsagarin ~ Fr5star + Fr4star + Fr3star + So5star + Jrnbrrecruits + 
+    Jr5star + Jr4star + Jr3star + Jravg + z_lysagarin + retoff + 
+    retdef + qbret + coachexp_school + Rssravg, data = dat)
+    preds<-predict(sw, newdata = newdat)
+    predset<-t(rbind(newdat$Team,newdat$Zsagarin,preds))
+     preddf<-as.data.frame(predset)
+  }
+  if(x=="forward") {
+    dat<-subset(fwsubset, fwsubset$Year != y)
+    newdat<-subset(fwsubset, fwsubset$Year == y)
+    colnames(dat) <- c('Team','Year','Zsagarin', 'z_lysagarin', 'Fravg', 'retoff', 'retdef', 'Jrnbrrecruits', 'Jravg', 'coachexp_school', 'qbret', 'Fr5star', 'Jr5star', 'So5star')
+  
+    fw<- lm(Zsagarin ~ z_lysagarin + Fravg + retoff + retdef + Jrnbrrecruits + 
+    Jravg + coachexp_school + qbret + Fr5star + Jr5star + So5star, data = dat)
+    
+  preds<-predict(fw, newdata = newdat)
+  predset<-t(rbind(newdat$Team, newdat$Zsagarin,preds))
+   preddf<-as.data.frame(predset)
+  }
+  if(x=="backward"){
+    dat<-subset(bwsubset, bwsubset$Year != y)
+    newdat<-subset(bwsubset, bwsubset$Year == y)
+  colnames(dat) <- c('Team', 'Year', 'Zsagarin', 'Fr5star', 'Fr4star', 'Fr3star', 'So5star', 'Jrnbrrecruits','Jr5star', 'Jr4star', 'Jr3star', 'Jravg', 'z_lysagarin', 'retoff', 
+    'retdef', 'qbret')
+  bw <- lm(Jr5star + Jr4star + Jr3star + Jravg + z_lysagarin + retoff + 
+    retdef + qbret + coachexp_school, data = dat)
+  preds<-predict(bw, newdata = newdat)
+  predset<-t(rbind(newdat$Team,newdat$Zsagarin,preds))
+  preddf<-as.data.frame(predset)
+
+  }
+  preddf$V2<-as.numeric(as.character(preddf$V2))
+  preddf$preds<-as.numeric(as.character(preddf$preds))
+ return(preddf)
+}
+
+plot(predSagNew("stepwise", 2016)$preds, predSag("stepwise",2016)$preds)
+```
