@@ -206,7 +206,6 @@ coachexp_school, data = swsubset[c(1:626,704:780),])
 #predict 2016
 swpredict<-predict(swx16, newdata = swsubset[627:703,])
 
-
 predictionsvsactual16<-data.frame(matrix(nrow=77,ncol=4))
 predictionsvsactual16[,1]<-X_CFBRversion$Team[627:703]
 predictionsvsactual16[,2]<-X_CFBRversion$Zsagarin[627:703]
@@ -541,14 +540,18 @@ bwsubset <- X_CFBRversion %>%
   dplyr::select(Team, Year, Zsagarin, Fr5star, Fr4star, Fr3star, So5star, Jrnbrrecruits, 
     Jr5star, Jr4star, Jr3star, Jravg, z_lysagarin, retoff, 
     retdef, qbret, coachexp_school)
+splinesubset<- X_CFBRversion %>%
+    dplyr::select(Team, Year, Zsagarin, Fr5star, Fr4star, Fr3star, So5star, Jrnbrrecruits, 
+    Jr5star, Jr4star, Jr3star, Jravg, z_lysagarin, retoff, 
+    retdef, qbret, coachexp_school, Rssravg, Int)
 
 predSagNew<- function(x,y)
 {
-  dat<-subset(swsubset, swsubset$Year != y)
+if(x=="stepwise") {
+    dat<-subset(swsubset, swsubset$Year != y)
   newdat<-subset(swsubset, swsubset$Year == y)
-  if(x=="stepwise") {
-    colnames(dat) <- c('Team', 'Year', 'Zsagarin', 'Fr5star', 'Fr4star', 'Fr3star', 'So5star', 'Jrnbrrecruits', 'Jr5star', 'Jr4star', 'Jr3star', 'Jravg', 'z_lysagarin', 'retoff', 
-    'retdef', 'qbret', 'coachexp_school', 'Rssravg')
+    #colnames(dat) <- c('Team', 'Year', 'Zsagarin', 'Fr5star', 'Fr4star', 'Fr3star', 'So5star', 'Jrnbrrecruits', 'Jr5star', 'Jr4star', 'Jr3star', 'Jravg', 'z_lysagarin', 'retoff', 
+    #'retdef', 'qbret', 'coachexp_school', 'Rssravg')
     sw<- lm(Zsagarin ~ Fr5star + Fr4star + Fr3star + So5star + Jrnbrrecruits + 
     Jr5star + Jr4star + Jr3star + Jravg + z_lysagarin + retoff + 
     retdef + qbret + coachexp_school + Rssravg, data = dat)
@@ -556,10 +559,10 @@ predSagNew<- function(x,y)
     predset<-t(rbind(newdat$Team,newdat$Zsagarin,preds))
      preddf<-as.data.frame(predset)
   }
-  if(x=="forward") {
+if(x=="forward") {
     dat<-subset(fwsubset, fwsubset$Year != y)
     newdat<-subset(fwsubset, fwsubset$Year == y)
-    colnames(dat) <- c('Team','Year','Zsagarin', 'z_lysagarin', 'Fravg', 'retoff', 'retdef', 'Jrnbrrecruits', 'Jravg', 'coachexp_school', 'qbret', 'Fr5star', 'Jr5star', 'So5star')
+    #colnames(dat) <- c('Team','Year','Zsagarin', 'z_lysagarin', 'Fravg', 'retoff', 'retdef', 'Jrnbrrecruits', 'Jravg', 'coachexp_school', 'qbret', 'Fr5star', 'Jr5star', 'So5star')
   
     fw<- lm(Zsagarin ~ z_lysagarin + Fravg + retoff + retdef + Jrnbrrecruits + 
     Jravg + coachexp_school + qbret + Fr5star + Jr5star + So5star, data = dat)
@@ -568,22 +571,186 @@ predSagNew<- function(x,y)
   predset<-t(rbind(newdat$Team, newdat$Zsagarin,preds))
    preddf<-as.data.frame(predset)
   }
-  if(x=="backward"){
+if(x=="backward"){
     dat<-subset(bwsubset, bwsubset$Year != y)
     newdat<-subset(bwsubset, bwsubset$Year == y)
-  colnames(dat) <- c('Team', 'Year', 'Zsagarin', 'Fr5star', 'Fr4star', 'Fr3star', 'So5star', 'Jrnbrrecruits','Jr5star', 'Jr4star', 'Jr3star', 'Jravg', 'z_lysagarin', 'retoff', 
-    'retdef', 'qbret')
-  bw <- lm(Jr5star + Jr4star + Jr3star + Jravg + z_lysagarin + retoff + 
+  #colnames(dat) <- c('Team', 'Year', 'Zsagarin', 'Fr5star', 'Fr4star', 'Fr3star', 'So5star', 'Jrnbrrecruits', 
+    #'Jr5star', 'Jr4star', 'Jr3star', 'Jravg', 'z_lysagarin', 'retoff', 
+    #'retdef', 'qbret', 'coachexp_school')
+  bw <- lm(Zsagarin ~ Fr5star + Fr4star + Fr3star + So5star + Jrnbrrecruits +
+    Jr5star + Jr4star + Jr3star + Jravg + z_lysagarin + retoff + 
     retdef + qbret + coachexp_school, data = dat)
   preds<-predict(bw, newdata = newdat)
   predset<-t(rbind(newdat$Team,newdat$Zsagarin,preds))
   preddf<-as.data.frame(predset)
 
   }
+  if(x=="stepQuad"){
+    dat<-subset(swsubset, swsubset$Year != y)
+    newdat<-subset(swsubset, swsubset$Year == y)
+    #colnames(dat) <- c('Team', 'Year', 'Zsagarin', 'Fr5star', 'Fr4star', 'Fr3star', 'So5star', 'Jrnbrrecruits', 'Jr5star', 'Jr4star', 'Jr3star', 'Jravg', 'z_lysagarin', 'retoff', 'retdef', 'qbret', 'coachexp_school', 'Rssravg')
+    SQ<-lm(Zsagarin ~ Fr5star + Fr4star + So5star +
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + Rssravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school + I(coachexp_school^2) + I(Fr4star^2), data = dat)
+     preds<-predict(SQ, newdata = newdat)
+  predset<-t(rbind(newdat$Team,newdat$Zsagarin,preds))
+  preddf<-as.data.frame(predset)
+  }
+  if(x=="spline"){
+    dat<-subset(splinesubset, splinesubset$Year != y)
+    newdat<-subset(splinesubset, splinesubset$Year == y)
+    #colnames(dat) <- c('Team', 'Year', 'Zsagarin', 'Fr5star', 'Fr4star', 'Fr3star', 'So5star', 'Jrnbrrecruits', 'Jr5star', 'Jr4star', 'Jr3star', 'Jravg', 'z_lysagarin', 'retoff', 
+    #'retdef', 'qbret', 'coachexp_school', 'Rssravg', 'Int')
+   spline<-lm(Zsagarin ~ Fr5star + Fr4star + 
+Jrnbrrecruits + Jr5star + Jr4star + 
+Jr3star + Jravg + Rssravg + z_lysagarin + 
+retoff + retdef + qbret + 
+coachexp_school + Int, data = dat)
+   preds<-predict(spline, newdata = newdat)
+  predset<-t(rbind(newdat$Team,newdat$Zsagarin,preds))
+  preddf<-as.data.frame(predset)
+  }
   preddf$V2<-as.numeric(as.character(preddf$V2))
   preddf$preds<-as.numeric(as.character(preddf$preds))
  return(preddf)
 }
 
-plot(predSagNew("stepwise", 2016)$preds, predSag("stepwise",2016)$preds)
+plot(predSagNew("stepwise", 2012)$preds, predSag("stepwise",2012)$preds)
 ```
+
+
+```{r}
+fwNew07<-predSagNew("forward",2007)
+bwNew07<-predSagNew("backward", 2007)
+swNew07<-predSagNew("stepwise",2007)
+sq07<-predSagNew("stepQuad", 2007)
+sp07<-predSagNew("spline",2007)
+fwNew08<-predSagNew("forward",2008)
+bwNew08<-predSagNew("backward", 2008)
+swNew08<-predSagNew("stepwise",2008)
+sq08<-predSagNew("stepQuad", 2008)
+sp08<-predSagNew("spline",2008)
+fwNew09<-predSagNew("forward",2009)
+bwNew09<-predSagNew("backward", 2009)
+swNew09<-predSagNew("stepwise",2009)
+sq09<-predSagNew("stepQuad", 2009)
+sp09<-predSagNew("spline",2009)
+fwNew10<-predSagNew("forward",2010)
+bwNew10<-predSagNew("backward", 2010)
+swNew10<-predSagNew("stepwise",2010)
+sq10<-predSagNew("stepQuad", 2010)
+sp10<-predSagNew("spline",2010)
+fwNew11<-predSagNew("forward",2011)
+bwNew11<-predSagNew("backward", 2011)
+swNew11<-predSagNew("stepwise",2011)
+sq11<-predSagNew("stepQuad", 2011)
+sp11<-predSagNew("spline",2011)
+fwNew12<-predSagNew("forward",2012)
+bwNew12<-predSagNew("backward", 2012)
+swNew12<-predSagNew("stepwise",2012)
+sq12<-predSagNew("stepQuad", 2012)
+sp12<-predSagNew("spline",2012)
+fwNew13<-predSagNew("forward",2013)
+bwNew13<-predSagNew("backward", 2013)
+swNew13<-predSagNew("stepwise",2013)
+sq13<-predSagNew("stepQuad", 2013)
+sp13<-predSagNew("spline",2013)
+fwNew14<-predSagNew("forward",2014)
+bwNew14<-predSagNew("backward", 2014)
+swNew14<-predSagNew("stepwise",2014)
+sq14<-predSagNew("stepQuad", 2014)
+sp14<-predSagNew("spline",2014)
+fwNew15<-predSagNew("forward",2015)
+bwNew15<-predSagNew("backward", 2015)
+swNew15<-predSagNew("stepwise",2015)
+sq15<-predSagNew("stepQuad", 2015)
+sp15<-predSagNew("spline",2015)
+fwNew16<-predSagNew("forward",2016)
+bwNew16<-predSagNew("backward", 2016)
+swNew16<-predSagNew("stepwise",2016)
+sq16<-predSagNew("stepQuad", 2016)
+sp16<-predSagNew("spline",2016)
+fwNew17<-predSagNew("forward",2017)
+bwNew17<-predSagNew("backward", 2017)
+swNew17<-predSagNew("stepwise",2017)
+sq17<-predSagNew("stepQuad", 2017)
+sp17<-predSagNew("spline",2017)
+fwNew18<-predSagNew("forward",2018)
+bwNew18<-predSagNew("backward", 2018)
+swNew18<-predSagNew("stepwise",2018)
+sq18<-predSagNew("stepQuad", 2018)
+sp18<-predSagNew("spline",2018)
+```
+
+
+```{r}
+#write functions for mape and mse
+
+MSE<-function(x){
+  mean((x$preds - x$V2)^2)
+}
+
+MAPE<-function(x){
+  mean(abs(x$preds - x$V2))
+}
+```
+
+```{r}
+MSPETable<-data.frame(matrix(ncol=0,nrow=12))
+MSPETable$sw<-c(mean((sw07$preds - sw07$V2)^2), mean((sw08$preds - sw08$V2)^2), mean((sw09$preds - sw09$V2)^2),mean((sw10$preds - sw10$V2)^2), mean((sw11$preds - sw11$V2)^2), mean((sw12$preds - sw12$V2)^2), mean((sw13$preds - sw13$V2)^2), mean((sw14$preds - sw14$V2)^2), mean((sw15$preds - sw15$V2)^2), mean((sw16$preds - sw16$V2)^2), mean((sw17$preds - sw17$V2)^2), mean((sw18$preds - sw18$V2)^2))
+MSPETable$fw<-c(mean((fw07$preds - fw07$V2)^2), mean((fw08$preds - fw08$V2)^2), mean((fw09$preds - fw09$V2)^2),mean((fw10$preds - fw10$V2)^2), mean((fw11$preds - fw11$V2)^2), mean((fw12$preds - fw12$V2)^2), mean((fw13$preds - fw13$V2)^2), mean((fw14$preds - fw14$V2)^2), mean((fw15$preds - fw15$V2)^2), mean((fw16$preds - fw16$V2)^2), mean((fw17$preds - fw17$V2)^2), mean((fw18$preds-fw18$V2)^2))
+MSPETable$bw<-c(mean((bw07$preds - bw07$V2)^2), mean((bw08$preds - bw08$V2)^2), mean((bw09$preds - bw09$V2)^2),mean((bw10$preds - bw10$V2)^2), mean((bw11$preds - bw11$V2)^2), mean((bw12$preds - bw12$V2)^2), mean((bw13$preds - bw13$V2)^2), mean((bw14$preds - bw14$V2)^2), mean((bw15$preds - bw15$V2)^2), mean((bw16$preds - bw16$V2)^2), mean((bw17$preds - bw17$V2)^2), mean((bw18$preds - bw18$V2)^2))
+MSPETable$fwNew<-c(MSE(fwNew07),MSE(fwNew08),MSE(fwNew09),MSE(fwNew10),MSE(fwNew11),MSE(fwNew12),MSE(fwNew13),MSE(fwNew14),MSE(fwNew15),MSE(fwNew16),MSE(fwNew17),MSE(fwNew18))
+MSPETable$bwNew<-c(MSE(bwNew07),MSE(bwNew08),MSE(bwNew09),MSE(bwNew10),MSE(bwNew11),MSE(bwNew12),MSE(bwNew13),MSE(bwNew14),MSE(bwNew15),MSE(bwNew16),MSE(bwNew17),MSE(bwNew18))
+MSPETable$swNew<-c(MSE(swNew07),MSE(swNew08),MSE(swNew09),MSE(swNew10),MSE(swNew11),MSE(swNew12),MSE(swNew13),MSE(swNew14),MSE(swNew15),MSE(swNew16),MSE(swNew17),MSE(swNew18))
+MSPETable$spline<-c(MSE(sp07),MSE(sp08), MSE(sp09),MSE(sp10), MSE(sp11), MSE(sp12), MSE(sp13), MSE(sp14), MSE(sp15), MSE(sp16), MSE(sp17), MSE(sp18))
+MSPETable$quad<-c(MSE(sq07),MSE(sq08),MSE(sq09), MSE(sq10), MSE(sq11), MSE(sq12), MSE(sq13), MSE(sq14), MSE(sq15), MSE(sq16), MSE(sq17), MSE(sq18))
+MSPETable$tree<-c(mean((tree07$pred - tree07$V2)^2), mean((tree08$pred - tree08$V2)^2), mean((tree09$pred - tree09$V2)^2),mean((tree10$pred - tree10$V2)^2), 
+mean((tree11$pred - tree11$V2)^2), mean((tree12$pred - tree12$V2)^2), mean((tree13$pred - tree13$V2)^2), mean((tree14$pred - tree14$V2)^2), mean((tree15$pred - tree15$V2)^2), mean((tree16$pred - tree16$V2)^2), mean((tree17$pred - tree17$V2)^2),mean((tree18$pred - tree18$V2)^2))
+MSPETable$year<-c(2007:2018)
+MSPETable$year<-c(2007:2018)
+```
+
+```{r}
+MAPETable<-data.frame(matrix(ncol=0,nrow=12))
+MAPETable$fw<-c(MAPE(fw07),MAPE(fw08),MAPE(fw09),MAPE(fw10), MAPE(fw11), MAPE(fw12), MAPE(fw13), MAPE(fw14), MAPE(fw15), MAPE(fw16), MAPE(fw17), MAPE(fw18))
+MAPETable$bw<-c(MAPE(bw07),MAPE(bw08),MAPE(bw09),MAPE(bw10), MAPE(bw11), MAPE(bw12), MAPE(bw13), MAPE(bw14), MAPE(bw15), MAPE(bw16), MAPE(bw17), MAPE(bw18))
+MAPETable$sw<-c(MAPE(sw07),MAPE(sw08),MAPE(sw09),MAPE(sw10), MAPE(sw11), MAPE(sw12), MAPE(sw13), MAPE(sw14), MAPE(sw15), MAPE(sw16), MAPE(sw17), MAPE(sw18))
+MAPETable$fwNew<-c(MAPE(fwNew07),MAPE(fwNew08),MAPE(fwNew09),MAPE(fwNew10), MAPE(fwNew11), MAPE(fwNew12), MAPE(fwNew13), MAPE(fwNew14), MAPE(fwNew15), MAPE(fwNew16), MAPE(fwNew17), MAPE(fwNew18))
+MAPETable$bwNew<-c(MAPE(bwNew07),MAPE(bwNew08),MAPE(bwNew09),MAPE(bwNew10), MAPE(bwNew11), MAPE(bwNew12), MAPE(bwNew13), MAPE(bwNew14), MAPE(bwNew15), MAPE(bwNew16), MAPE(bwNew17), MAPE(bwNew18))
+MAPETable$swNew<-c(MAPE(swNew07),MAPE(swNew08),MAPE(swNew09),MAPE(swNew10), MAPE(swNew11), MAPE(swNew12), MAPE(swNew13), MAPE(swNew14), MAPE(swNew15), MAPE(swNew16), MAPE(swNew17), MAPE(swNew18))
+MAPETable$spline<-c(MAPE(sp07),MAPE(sp08),MAPE(sp09),MAPE(sp10),MAPE(sp11),MAPE(sp12),MAPE(sp13),MAPE(sp14),MAPE(sp15),MAPE(sp16),MAPE(sp17),MAPE(sp18))
+MAPETable$quad<-c(MAPE(sq07),MAPE(sq08),MAPE(sq09),MAPE(sq10),MAPE(sq11),MAPE(sq12),MAPE(sq13),MAPE(sq14),MAPE(sq15),MAPE(sq16),MAPE(sq17),MAPE(sq18))
+MAPETable$tree<-c(mean(abs(tree07$pred - tree07$V2)), mean(abs(tree08$pred - tree08$V2)), mean(abs(tree09$pred - tree09$V2)),mean(abs(tree10$pred - tree10$V2)), 
+mean(abs(tree11$pred - tree11$V2)), mean(abs(tree12$pred - tree12$V2)), mean(abs(tree13$pred - tree13$V2)), mean(abs(tree14$pred - tree14$V2)), mean(abs(tree15$pred - tree15$V2)), mean(abs(tree16$pred - tree16$V2)), mean(abs(tree17$pred - tree17$V2)),mean(abs(tree18$pred - tree18$V2)))
+MSPETable$year<-c(2007:2018)
+MAPETable$year<-c(2007:2018)
+```
+
+
+```{r}
+mean(MAPETable$fw)
+mean(MAPETable$fwNew)
+mean(MAPETable$bw)
+mean(MAPETable$bwNew)
+mean(MAPETable$sw)
+mean(MAPETable$swNew)
+mean(MAPETable$sp)
+mean(MAPETable$quad)
+mean(MAPETable$tree)
+```
+
+```{r}
+mean(MSPETable$fw)
+mean(MSPETable$fwNew)
+mean(MSPETable$bw)
+mean(MSPETable$bwNew)
+mean(MSPETable$sw)
+mean(MSPETable$swNew)
+mean(MSPETable$sp)
+mean(MSPETable$quad)
+mean(MSPETable$tree)
+```
+
