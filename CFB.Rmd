@@ -495,6 +495,11 @@ tree18$pred<-as.numeric(as.character(tree18$pred))
 tree18$V2<-as.numeric(as.character(tree18$V2))
 ```
 
+```{r}
+model_tree <-tree(Zsagarin~FrNbrRecruits+Fr5star+Fr4star+Fr3star+Fravg+Sonbrrecruits+So5star+So4star+So3star+Soavg+Jrnbrrecruits+Jr5star+Jr4star+Jr3star+Jravg+Srnbrrecruits+Sr5star+Sr4star+Sr3star+Sravg+Rssrnbrrecruits+Rssr5star+Rssr4star+Rssr3star+ Rssravg+z_lysagarin+z_tyasagarin+retoff+retdef+qbret+bowl+bowlwin+coachexp_school+coachexp_total+BigTen+SEC+BigTwelve+ACC+PacTen+Bigeast, data = X_CFBRversion130)
+plot(model_tree)
+text(model_tree,cex=.5)
+```
 
 
 ```{r}
@@ -740,6 +745,12 @@ mean(MAPETable$swNew)
 mean(MAPETable$sp)
 mean(MAPETable$quad)
 mean(MAPETable$tree)
+
+mean(MAPETable$fwNew)
+mean(MAPETable$bwNew)
+mean(MAPETable$swNew)
+mean(MAPETable$sp)
+mean(MAPETable$quad)
 ```
 
 ```{r}
@@ -752,5 +763,30 @@ mean(MSPETable$swNew)
 mean(MSPETable$sp)
 mean(MSPETable$quad)
 mean(MSPETable$tree)
+
+mean(MSPETable$fwNew)
+mean(MSPETable$bwNew)
+mean(MSPETable$swNew)
+mean(MSPETable$sp)
+mean(MSPETable$quad)
+```
+$$
+MSE = \dfrac{\sum_{i=1}^n(y_i-\hat{y})^2}{n}
+$$
+
+$$
+MAPE = \dfrac{\sum_{i=1}^n\vert{y_i-\hat{y}\vert}}{n}
+$$
+
+```{r}
+sessionInfo()
+```
+
+```{r}
+str(MAPETable)
+
+apply(MAPETable,2,mean)
+
+apply(MSPETable,2,mean)
 ```
 
